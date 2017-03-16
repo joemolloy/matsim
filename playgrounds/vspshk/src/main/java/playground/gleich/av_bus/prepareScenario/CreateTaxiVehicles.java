@@ -63,7 +63,7 @@ public class CreateTaxiVehicles {
 		String taxisFile = FilePaths.PATH_TAXI_VEHICLES_100_BERLIN__10PCT;
 		List<Vehicle> vehicles = new ArrayList<>();
 		Random random = MatsimRandom.getLocalInstance();
-		Geometry geometryStudyArea = JbUtils.readShapeFileAndExtractGeometry(FilePaths.PATH_STUDY_AREA_SHP, FilePaths.STUDY_AREA_SHP_KEY).get(FilePaths.STUDY_AREA_SHP_KEY);
+		Geometry geometryStudyArea = JbUtils.readShapeFileAndExtractGeometry(FilePaths.PATH_STUDY_AREA_SHP, FilePaths.STUDY_AREA_SHP_KEY).get(FilePaths.STUDY_AREA_SHP_ELEMENT);
 		new MatsimNetworkReader(scenario.getNetwork()).readFile(networkfile);
 		List<Id<Link>> linksInArea = new ArrayList<>();
 			for(Link link: scenario.getNetwork().getLinks().values()){

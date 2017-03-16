@@ -28,16 +28,26 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Route;
+import org.matsim.contrib.av.intermodal.router.config.VariableAccessConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.GenericRouteImpl;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.utils.gis.ShapeFileReader;
+import org.opengis.feature.simple.SimpleFeature;
+
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 
 /**
  * @author  jbischoff
@@ -51,6 +61,8 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 	
 	private Map<String,Boolean> teleportedModes = new HashMap<>();
 	private Map<Integer,String> distanceMode = new TreeMap<>();
+	private Map<String, Geometry> boundingBoxesVariableAccessArea = new HashMap<>();
+	private Map<String, Geometry> geometriesVariableAccessArea = new HashMap<>();
 	
 	private final Network carnetwork;
 	private final Config config;
@@ -61,6 +73,13 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 	public FixedDistanceBasedVariableAccessModule(Network carnetwork, Config config) {
 		this.config = config;
 		this.carnetwork = carnetwork;
+		VariableAccessConfigGroup vaconfig = (VariableAccessConfigGroup) config.getModules().get(VariableAccessConfigGroup.GROUPNAME);
+		if(vaconfig.getVariableAccessAreaShpFile() != null && vaconfig.getVariableAccessAreaShpKey() != null){
+			geometriesVariableAccessArea = readShapeFileAndExtractGeometry(vaconfig.getVariableAccessAreaShpFile(), vaconfig.getVariableAccessAreaShpKey());
+			for(String name: geometriesVariableAccessArea.keySet()){
+				boundingBoxesVariableAccessArea.put(name, geometriesVariableAccessArea.get(name).getEnvelope());
+			}
+		}
 	}
 	/**
 	 * 
@@ -91,7 +110,11 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 	@Override
 	public Leg getAccessEgressModeAndTraveltime(Person person, Coord coord, Coord toCoord, double time) {
 		double egressDistance = CoordUtils.calcEuclideanDistance(coord, toCoord);
-		String mode = getModeForDistance(egressDistance);
+		// return usual transit walk if the access / egress leg has neither origin nor destination in the area where variable access shall be used
+		String mode = TransportMode.transit_walk;
+		if(coordIsInVariableAccessArea(coord) || coordIsInVariableAccessArea(toCoord)){
+			mode = getModeForDistance(egressDistance);
+		}
 		Leg leg = PopulationUtils.createLeg(mode);
 		Link startLink = NetworkUtils.getNearestLink(carnetwork, coord);
 		Link endLink = NetworkUtils.getNearestLink(carnetwork, toCoord);
@@ -142,7 +165,37 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 		return this.teleportedModes.get(mode);
 	}
 	
+	public static Map<String,Geometry> readShapeFileAndExtractGeometry(String filename, String key){
+		Map<String,Geometry> geometry = new HashMap<>();	
+		for (SimpleFeature ft : ShapeFileReader.getAllFeatures(filename)) {
+			
+				GeometryFactory geometryFactory= new GeometryFactory();
+				WKTReader wktReader = new WKTReader(geometryFactory);
+
+				try {
+					Geometry geo = wktReader.read((ft.getAttribute("the_geom")).toString());
+					String lor = ft.getAttribute(key).toString();
+					geometry.put(lor, geo);
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}			 
+		}	
+		return geometry;
+	}
 	
+	private boolean coordIsInVariableAccessArea(Coord coord){
+		if(boundingBoxesVariableAccessArea.size() > 0){
+			for(String name: boundingBoxesVariableAccessArea.keySet()){
+				if(boundingBoxesVariableAccessArea.get(name).contains(MGC.coord2Point(coord))){
+					if(geometriesVariableAccessArea.get(name).contains(MGC.coord2Point(coord))){
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
 	
 
 }
