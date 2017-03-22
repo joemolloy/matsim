@@ -67,15 +67,15 @@ public class ExtractAgentsInArea {
 			extractor.outputLinksInAreaShpPath = args[8];
 			
 		} else {
-			extractor.inputNetworkPath = FilePaths.PATH_NETWORK_BERLIN_100PCT;
-			extractor.inputPopulationPath = FilePaths.PATH_POPULATION_BERLIN_100PCT_UNFILTERED;
-			extractor.studyAreaShpPath = FilePaths.PATH_STUDY_AREA_SHP;
-			extractor.studyAreaShpKey = FilePaths.STUDY_AREA_SHP_KEY;
-			extractor.studyAreaShpElement = FilePaths.STUDY_AREA_SHP_ELEMENT;
-			extractor.outputPopulationPath = FilePaths.PATH_POPULATION_BERLIN_100PCT_FILTERED;
-			extractor.outputNetworkPath = FilePaths.PATH_NETWORK_BERLIN_100PCT_ENCLOSED_IN_AREA;
-			extractor.outputLinksInAreaPath = FilePaths.PATH_BERLIN_100PCT_LINKS_ENCLOSED_IN_AREA;
-			extractor.outputLinksInAreaShpPath = FilePaths.PATH_BERLIN_100PCT_SHP_LINKS_ENCLOSED_IN_AREA;
+			extractor.inputNetworkPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_NETWORK_BERLIN_100PCT;
+			extractor.inputPopulationPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_POPULATION_BERLIN_100PCT_UNFILTERED;
+			extractor.studyAreaShpPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_STUDY_AREA_SHP;
+			extractor.studyAreaShpKey = FilePaths.PATH_BASE_DIRECTORY + FilePaths.STUDY_AREA_SHP_KEY;
+			extractor.studyAreaShpElement = FilePaths.PATH_BASE_DIRECTORY + FilePaths.STUDY_AREA_SHP_ELEMENT;
+			extractor.outputPopulationPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_POPULATION_BERLIN_100PCT_FILTERED;
+			extractor.outputNetworkPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_NETWORK_BERLIN_100PCT_ENCLOSED_IN_AREA;
+			extractor.outputLinksInAreaPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_BERLIN_100PCT_LINKS_ENCLOSED_IN_AREA;
+			extractor.outputLinksInAreaShpPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_BERLIN_100PCT_SHP_LINKS_ENCLOSED_IN_AREA;
 		}
 		extractor.run();
 	}

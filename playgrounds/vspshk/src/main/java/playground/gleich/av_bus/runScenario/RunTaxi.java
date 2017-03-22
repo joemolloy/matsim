@@ -27,11 +27,11 @@ import playground.gleich.av_bus.FilePaths;
 public class RunTaxi {
 // Override FixedDistanceBasedVariableAccessModule in order to return taxi only for access/egress trips originating or ending within study area
 	public static void main(String[] args) {
-		Config config = ConfigUtils.loadConfig(FilePaths.PATH_CONFIG_BERLIN__10PCT_NULLFALL,
+		Config config = ConfigUtils.loadConfig(FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_CONFIG_BERLIN__10PCT_TAXI,
 				new TaxiConfigGroup(), new DvrpConfigGroup());
 		VariableAccessConfigGroup vacfg = new VariableAccessConfigGroup();
-		vacfg.setVariableAccessAreaShpFile(FilePaths.PATH_STUDY_AREA_SHP);
-		vacfg.setVariableAccessAreaShpKey(FilePaths.STUDY_AREA_SHP_KEY);
+		vacfg.setVariableAccessAreaShpFile(FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_AV_OPERATION_AREA_SHP);
+		vacfg.setVariableAccessAreaShpKey(FilePaths.AV_OPERATION_AREA_SHP_KEY);
 		vacfg.setStyle("fixed"); //FixedDistanceBasedVariableAccessModule
 		{
 			VariableAccessModeConfigGroup taxi = new VariableAccessModeConfigGroup();
@@ -49,27 +49,36 @@ public class RunTaxi {
 		}
 		config.addModule(vacfg);
 
+		// ScenarioUtils.loadScenario(config) searches files starting at the directory where the config is located
+		config.network().setInputFile("../../../../" + FilePaths.PATH_NETWORK_BERLIN__10PCT);
+		config.plans().setInputFile("../../../../" + FilePaths.PATH_POPULATION_BERLIN__10PCT_FILTERED);
+//		config.plans().setInputFile("../../../../" + "data/output/Berlin10pct/Taxi_500_VariableAccess_start_and_end_but_still_rotes_outside_area/population_agent_using_taxi_outside_variable_access_area.xml");
+		config.transit().setVehiclesFile("../../../../" + FilePaths.PATH_TRANSIT_VEHICLES_BERLIN__10PCT);
+		config.transit().setTransitScheduleFile("../../../../" + FilePaths.PATH_TRANSIT_SCHEDULE_BERLIN__10PCT_WITHOUT_BUSES_IN_STUDY_AREA);
 		config.transitRouter().setSearchRadius(15000);
 		config.transitRouter().setExtensionRadius(0);
 		config.addConfigConsistencyChecker(new TaxiConfigConsistencyChecker());
 		config.checkConsistency();
+		config.global().setNumberOfThreads(4);
+		config.transitRouter().setDirectWalkFactor(100);
 
-		Scenario scenario = ScenarioUtils.createScenario(config);
-		new MatsimNetworkReader(scenario.getNetwork()).readFile(FilePaths.PATH_NETWORK_BERLIN__10PCT);
-		new TransitScheduleReaderV1(scenario).readFile(FilePaths.PATH_TRANSIT_SCHEDULE_BERLIN__10PCT_WITHOUT_BUSES_IN_STUDY_AREA);
-		new VehicleReaderV1(scenario.getTransitVehicles()).readFile(FilePaths.PATH_TRANSIT_VEHICLES_BERLIN__10PCT);
-		new PopulationReader(scenario).readFile(FilePaths.PATH_POPULATION_BERLIN__10PCT_FILTERED);
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+//		Scenario scenario = ScenarioUtils.createScenario(config);
+//		new MatsimNetworkReader(scenario.getNetwork()).readFile(FilePaths.PATH_NETWORK_BERLIN__10PCT);
+//		new TransitScheduleReaderV1(scenario).readFile(FilePaths.PATH_TRANSIT_SCHEDULE_BERLIN__10PCT_WITHOUT_BUSES_IN_STUDY_AREA);
+//		new VehicleReaderV1(scenario.getTransitVehicles()).readFile(FilePaths.PATH_TRANSIT_VEHICLES_BERLIN__10PCT);
+//		new PopulationReader(scenario).readFile(FilePaths.PATH_POPULATION_BERLIN__10PCT_FILTERED);
 		config.controler().setFirstIteration(0);
 		config.controler().setLastIteration(100);
-		config.controler().setOutputDirectory(FilePaths.PATH_OUTPUT_BERLIN__10PCT_TAXI_100);
-		config.controler().setWritePlansInterval(10);
+		config.controler().setOutputDirectory(FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_OUTPUT_BERLIN__10PCT_TAXI_100);
+		config.controler().setWritePlansInterval(1);
 		config.qsim().setEndTime(60*60*60); // [geloest durch maximum speed in transit_vehicles-datei: bei Stunde 50:00:00 immer noch 492 Veh unterwegs (nur pt veh., keine Agenten), alle pt-fahrten stark verspätet, da pünktlicher start, aber niedrigere Geschwindigkeit als im Fahrplan geplant]
-		config.controler().setWriteEventsInterval(10);	
+		config.controler().setWriteEventsInterval(1);	
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		
+		TaxiConfigGroup.get(config).setTaxisFile(FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_TAXI_VEHICLES_100_BERLIN__10PCT);
 		FleetImpl fleet = new FleetImpl();
-		String taxiFileName = TaxiConfigGroup.get(config).getTaxisFileUrl(config.getContext()).getFile();
-		new VehicleReader(scenario.getNetwork(), fleet).readFile(taxiFileName);
+		new VehicleReader(scenario.getNetwork(), fleet).readFile(FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_TAXI_VEHICLES_100_BERLIN__10PCT);
 		
 		Controler controler = new Controler(scenario);
 		controler.addOverridingModule(new TaxiOutputModule());

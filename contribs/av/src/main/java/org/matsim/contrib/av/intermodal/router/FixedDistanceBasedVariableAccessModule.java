@@ -44,6 +44,7 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
+import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.ParseException;
@@ -61,7 +62,10 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 	
 	private Map<String,Boolean> teleportedModes = new HashMap<>();
 	private Map<Integer,String> distanceMode = new TreeMap<>();
-	private Map<String, Geometry> boundingBoxesVariableAccessArea = new HashMap<>();
+	private Map<String, Double> minXVariableAccessArea = new HashMap<>();
+	private Map<String, Double> minYVariableAccessArea = new HashMap<>();
+	private Map<String, Double> maxXVariableAccessArea = new HashMap<>();
+	private Map<String, Double> maxYVariableAccessArea = new HashMap<>();
 	private Map<String, Geometry> geometriesVariableAccessArea = new HashMap<>();
 	
 	private final Network carnetwork;
@@ -77,9 +81,14 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 		if(vaconfig.getVariableAccessAreaShpFile() != null && vaconfig.getVariableAccessAreaShpKey() != null){
 			geometriesVariableAccessArea = readShapeFileAndExtractGeometry(vaconfig.getVariableAccessAreaShpFile(), vaconfig.getVariableAccessAreaShpKey());
 			for(String name: geometriesVariableAccessArea.keySet()){
-				boundingBoxesVariableAccessArea.put(name, geometriesVariableAccessArea.get(name).getEnvelope());
+				Envelope e = geometriesVariableAccessArea.get(name).getEnvelopeInternal();
+				minXVariableAccessArea.put(name, e.getMinX());
+				minYVariableAccessArea.put(name, e.getMinY());
+				maxXVariableAccessArea.put(name, e.getMaxX());
+				maxYVariableAccessArea.put(name, e.getMaxY());
 			}
 		}
+		teleportedModes.put(TransportMode.transit_walk, true);
 	}
 	/**
 	 * 
@@ -111,8 +120,8 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 	public Leg getAccessEgressModeAndTraveltime(Person person, Coord coord, Coord toCoord, double time) {
 		double egressDistance = CoordUtils.calcEuclideanDistance(coord, toCoord);
 		// return usual transit walk if the access / egress leg has neither origin nor destination in the area where variable access shall be used
-		String mode = TransportMode.transit_walk;
-		if(coordIsInVariableAccessArea(coord) || coordIsInVariableAccessArea(toCoord)){
+		String mode = TransportMode.walk;
+		if(isInVariableAccessArea(coord) && isInVariableAccessArea(toCoord)){
 			mode = getModeForDistance(egressDistance);
 		}
 		Leg leg = PopulationUtils.createLeg(mode);
@@ -184,17 +193,20 @@ public class FixedDistanceBasedVariableAccessModule implements VariableAccessEgr
 		return geometry;
 	}
 	
-	private boolean coordIsInVariableAccessArea(Coord coord){
-		if(boundingBoxesVariableAccessArea.size() > 0){
-			for(String name: boundingBoxesVariableAccessArea.keySet()){
-				if(boundingBoxesVariableAccessArea.get(name).contains(MGC.coord2Point(coord))){
-					if(geometriesVariableAccessArea.get(name).contains(MGC.coord2Point(coord))){
+	private boolean isInVariableAccessArea(Coord coord){
+		if(geometriesVariableAccessArea.size() > 0){
+			for(String name: geometriesVariableAccessArea.keySet()){
+				if(minXVariableAccessArea.get(name) < coord.getX() && maxXVariableAccessArea.get(name) > coord.getX() &&
+						minYVariableAccessArea.get(name) < coord.getY() && maxYVariableAccessArea.get(name) > coord.getY()){
+//					if(geometriesVariableAccessArea.get(name).contains(MGC.coord2Point(coord))){
 						return true;
-					}
+//					}
 				}
 			}
+			return false;
+		} else {			
+			return true;
 		}
-		return false;
 	}
 	
 

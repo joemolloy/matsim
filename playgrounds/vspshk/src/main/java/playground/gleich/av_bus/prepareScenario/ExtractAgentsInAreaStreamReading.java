@@ -83,15 +83,15 @@ public class ExtractAgentsInAreaStreamReading {
 					selectAgentsByRoutesThroughArea, true, outputLinksInAreaShpPath, outputLinksInAreaShpCoordinateSystem);
 			
 		} else {
-			String inputNetworkPath = FilePaths.PATH_NETWORK_BERLIN__10PCT;
-			String inputPopulationPath = FilePaths.PATH_POPULATION_BERLIN__10PCT_UNFILTERED;
-			String studyAreaShpPath = FilePaths.PATH_STUDY_AREA_SHP;
+			String inputNetworkPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_NETWORK_BERLIN__10PCT;
+			String inputPopulationPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_POPULATION_BERLIN__10PCT_UNFILTERED;
+			String studyAreaShpPath =FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_STUDY_AREA_SHP;
 			String studyAreaShpKey = FilePaths.STUDY_AREA_SHP_KEY;
 			String studyAreaShpElement = FilePaths.STUDY_AREA_SHP_ELEMENT;
-			String outputPopulationPath = FilePaths.PATH_POPULATION_BERLIN__10PCT_FILTERED;
+			String outputPopulationPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_POPULATION_BERLIN__10PCT_FILTERED;
 			boolean selectAgentsByRoutesThroughArea = true;
 			boolean selectAgentsByActivitiesInArea = true;
-			String outputLinksInAreaShpPath = FilePaths.PATH_SHP_LINKS_ENCLOSED_IN_AREA_BERLIN__10PCT;
+			String outputLinksInAreaShpPath = FilePaths.PATH_BASE_DIRECTORY + FilePaths.PATH_SHP_LINKS_ENCLOSED_IN_AREA_BERLIN__10PCT;
 			String outputLinksInAreaShpCoordinateSystem = "DHDN_GK4";
 			extractor = new ExtractAgentsInAreaStreamReading(inputNetworkPath, inputPopulationPath, studyAreaShpPath, 
 					studyAreaShpKey, studyAreaShpElement, outputPopulationPath, selectAgentsByActivitiesInArea, 
